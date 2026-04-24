@@ -1,100 +1,64 @@
 import SwiftUI
 
+/// Reached via `Me → The crew`. Members, categories, and household meta.
+/// The balance chart moved to `BalanceDetailView` (hub drill-in) — this view
+/// keeps the people + settings surfaces.
 struct HouseholdView: View {
     @Environment(AppStore.self) private var store
 
-    @State private var window: BalanceWindow = .sevenDays
     @State private var showMemberEditor = false
     @State private var editingMember: Member?
 
-    enum BalanceWindow: String, CaseIterable, Identifiable {
-        case sevenDays = "7 days"
-        case thirtyDays = "30 days"
-        case allTime = "All time"
-        var id: String { rawValue }
-    }
-
-    private var dateInterval: DateInterval {
-        let now = Date.now
-        switch window {
-        case .sevenDays:
-            return DateInterval(start: Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now, end: now)
-        case .thirtyDays:
-            return DateInterval(start: Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now, end: now)
-        case .allTime:
-            return DateInterval(start: .distantPast, end: now)
-        }
-    }
-
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: Spacing.xl) {
-                    balanceCard
-                    membersCard
-                    settingsCard
+        ScrollView {
+            VStack(spacing: Spacing.xl) {
+                membersCard
+                settingsCard
+            }
+            .padding(Spacing.lg)
+        }
+        .scrollContentBackground(.hidden)
+        .background(backdrop.ignoresSafeArea())
+        .navigationTitle(Copy.Me.household)
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showMemberEditor = true
+                } label: {
+                    Image(systemName: "person.badge.plus")
                 }
-                .padding(Spacing.lg)
+                .buttonStyle(.glass)
+                .accessibilityLabel("Add to the crew")
             }
-            .scrollContentBackground(.hidden)
-            .navigationTitle(store.household.name.isEmpty ? "Household" : store.household.name)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showMemberEditor = true
-                    } label: {
-                        Image(systemName: "person.badge.plus")
-                    }
-                    .buttonStyle(.glass)
-                }
-            }
-            .sheet(isPresented: $showMemberEditor) {
-                MemberEditorView()
-            }
-            .sheet(item: $editingMember) { m in
-                MemberEditorView(existing: m)
-            }
+        }
+        .sheet(isPresented: $showMemberEditor) {
+            MemberEditorView()
+        }
+        .sheet(item: $editingMember) { m in
+            MemberEditorView(existing: m)
         }
     }
 
-    // MARK: - Balance card
-
-    private var balanceCard: some View {
-        VStack(alignment: .leading, spacing: Spacing.lg) {
-            HStack {
-                Label("Effort balance", systemImage: "scalemass")
-                    .font(.headline)
-                Spacer()
-                Picker("Window", selection: $window.animation(Motion.standard)) {
-                    ForEach(BalanceWindow.allCases) { w in
-                        Text(w.rawValue).tag(w)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 220)
-            }
-
-            BalanceChart(data: store.householdPoints(in: dateInterval))
-                .frame(height: 160)
-                .animation(Motion.hero, value: window)
-                .animation(Motion.hero, value: store.occurrences.count)
-        }
-        .padding(Spacing.lg)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
+    private var backdrop: some View {
+        LinearGradient(
+            colors: DayScene.current().backgroundStops(),
+            startPoint: .top, endPoint: .bottom
+        )
     }
 
-    // MARK: - Members card
+    // MARK: - Members
 
     private var membersCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
-                Label("Members", systemImage: "person.3.fill")
+                Label("The crew", systemImage: "person.3.fill")
                     .font(.headline)
+                    .foregroundStyle(Color.ink)
                 Spacer()
                 Text("\(store.members.count)")
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.inkSoft)
             }
 
             VStack(spacing: Spacing.sm) {
@@ -112,23 +76,33 @@ struct HouseholdView: View {
             Button {
                 showMemberEditor = true
             } label: {
-                Label("Add member", systemImage: "plus")
+                Label("Add someone", systemImage: "plus")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.glass)
             .controlSize(.large)
         }
         .padding(Spacing.lg)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
+        .background(Color.surface, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
+                .strokeBorder(Color.ink.opacity(0.06), lineWidth: 0.5)
+        )
     }
 
     private func memberRow(_ member: Member) -> some View {
-        HStack(spacing: Spacing.md) {
+        let weekPoints: Int = {
+            let now = Date.now
+            let start = Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now
+            return store.points(for: member.id, in: DateInterval(start: start, end: now))
+        }()
+
+        return HStack(spacing: Spacing.md) {
             AvatarView(emoji: member.emoji, tint: member.tint, size: 40)
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
-                    Text(member.name).font(.body.weight(.semibold))
+                    Text(member.name).font(.body.weight(.semibold)).foregroundStyle(Color.ink)
                     if member.isAdmin {
                         Image(systemName: "crown.fill")
                             .font(.caption)
@@ -139,52 +113,59 @@ struct HouseholdView: View {
                             .font(.caption2.weight(.bold))
                             .padding(.horizontal, 6).padding(.vertical, 2)
                             .foregroundStyle(.white)
-                            .background(Color.accentColor.gradient, in: Capsule())
+                            .background(Color.ink, in: Capsule())
                     }
                 }
-                Text("\(store.points(for: member.id, in: dateInterval)) pts · \(window.rawValue)")
+                Text("\(weekPoints) karma this week")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.inkSoft)
             }
             Spacer()
             Image(systemName: "chevron.right")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(Color.ink.opacity(0.35))
         }
         .padding(.vertical, Spacing.sm)
         .padding(.horizontal, Spacing.md)
-        .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
+        .background(Color.ink.opacity(0.04), in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
     }
 
-    // MARK: - Settings card
+    // MARK: - Settings
 
     private var settingsCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Label("Categories", systemImage: "tag")
                 .font(.headline)
+                .foregroundStyle(Color.ink)
 
             NavigationLink {
                 CategoryManagerView()
             } label: {
                 HStack {
                     Text("Manage categories")
+                        .foregroundStyle(Color.ink)
                     Spacer()
                     Text("\(store.categories.count)")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.inkSoft)
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Color.ink.opacity(0.35))
                 }
                 .padding(Spacing.md)
-                .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
+                .background(Color.ink.opacity(0.04), in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
             }
             .buttonStyle(.plain)
         }
         .padding(Spacing.lg)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
+        .background(Color.surface, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
+                .strokeBorder(Color.ink.opacity(0.06), lineWidth: 0.5)
+        )
     }
 }
 
-// MARK: - Balance chart (custom, avoids Charts dependency while staying animated)
+// MARK: - Balance chart
 
+/// Reusable bar-style chart. Used by `BalanceDetailView`.
 struct BalanceChart: View {
     let data: [(member: Member, points: Int)]
     @State private var appeared = false
@@ -193,24 +174,22 @@ struct BalanceChart: View {
         max(data.map(\.points).max() ?? 0, 1)
     }
 
-    private var totalPoints: Int { data.reduce(0) { $0 + $1.points } }
-    private var fairShare: Int { max(totalPoints / max(data.count, 1), 1) }
-
     var body: some View {
         GeometryReader { geo in
-            let barWidth = min((geo.size.width - CGFloat(data.count - 1) * Spacing.md) / CGFloat(max(data.count, 1)), 70)
+            let count = max(data.count, 1)
+            let barWidth = min((geo.size.width - CGFloat(count - 1) * Spacing.md) / CGFloat(count), 70)
             HStack(alignment: .bottom, spacing: Spacing.md) {
                 ForEach(Array(data.enumerated()), id: \.element.member.id) { index, item in
                     VStack(spacing: Spacing.sm) {
                         ZStack(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 10)
-                                .fill(.white.opacity(0.06))
+                                .fill(Color.ink.opacity(0.06))
                             RoundedRectangle(cornerRadius: 10)
                                 .fill(item.member.tint.gradient)
                                 .frame(height: appeared ? barHeight(for: item.points, available: geo.size.height - 60) : 0)
                                 .shadow(color: item.member.tint.opacity(0.5), radius: 8, y: 3)
                                 .animation(
-                                    .spring(response: 0.55, dampingFraction: 0.8).delay(Double(index) * 0.06),
+                                    .spring(response: 0.55, dampingFraction: 0.82).delay(Double(index) * 0.04),
                                     value: appeared
                                 )
                                 .animation(Motion.hero, value: item.points)
@@ -233,6 +212,7 @@ struct BalanceChart: View {
                         Text(item.member.name)
                             .font(.caption2.weight(.semibold))
                             .lineLimit(1)
+                            .foregroundStyle(Color.ink)
                     }
                 }
             }

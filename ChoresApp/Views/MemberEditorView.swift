@@ -84,19 +84,19 @@ struct MemberEditorView: View {
                             }
                             dismiss()
                         } label: {
-                            Label("Remove member", systemImage: "person.fill.xmark")
+                            Label("Remove from the crew", systemImage: "person.fill.xmark")
                         }
                     }
                 }
             }
-            .navigationTitle(existing == nil ? "Add member" : "Edit member")
+            .navigationTitle(existing == nil ? "Add to the crew" : "Edit profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Copy.Common.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save", action: save)
+                    Button(Copy.Common.save, action: save)
                         .buttonStyle(.glassProminent)
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }

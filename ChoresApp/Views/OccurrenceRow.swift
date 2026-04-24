@@ -33,7 +33,7 @@ struct OccurrenceRow: View {
                     }
                     EffortBadge(effort: occurrence.effort, compact: true)
                     if overdue {
-                        Label("Overdue", systemImage: "clock.badge.exclamationmark")
+                        Label(Copy.Activity.wasYesterday, systemImage: "clock.badge.exclamationmark")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.red)
                     }
@@ -49,7 +49,7 @@ struct OccurrenceRow: View {
                     .foregroundStyle(.secondary)
                     .frame(width: 32, height: 32)
                     .background(.white.opacity(0.08), in: Circle())
-                    .accessibilityLabel("Open pool")
+                    .accessibilityLabel(Copy.Wizard.whoOpen)
             }
         }
         .padding(Spacing.lg)
@@ -65,8 +65,8 @@ struct OccurrenceRow: View {
         .animation(Motion.responsive, value: dragOffset)
         .animation(Motion.standard, value: isCompleting)
         .contextMenu {
-            Button("Complete", systemImage: "checkmark.circle.fill", action: triggerComplete)
-            Button("Skip today", systemImage: "forward.end", action: onSkip)
+            Button(Copy.Hub.doItNowPrimary, systemImage: "checkmark.circle.fill", action: triggerComplete)
+            Button(Copy.Common.skipToday, systemImage: "forward.end", action: onSkip)
         }
         .sensoryFeedback(.success, trigger: isCompleting)
     }
@@ -94,7 +94,7 @@ struct OccurrenceRow: View {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Complete \(occurrence.title)")
+        .accessibilityLabel("\(Copy.Hub.doItNowPrimary) \(occurrence.title)")
     }
 
     private func categoryPill(_ cat: Category) -> some View {

@@ -387,4 +387,49 @@ final class AppStore {
             Category(name: "Admin", symbolName: "tray.full", tintHex: "#7D8597")
         ]
     }
+
+    /// Starter-kit chores the onboarding flow can drop in for a new home.
+    /// Keyed to category name so it works on the default seed.
+    func seedStarterJobs() {
+        let cleaning = categories.first(where: { $0.name == "Cleaning" })?.id
+        let kitchen = categories.first(where: { $0.name == "Kitchen" })?.id
+        let errands = categories.first(where: { $0.name == "Errands" })?.id
+
+        let nineAM = Calendar.current.date(
+            bySettingHour: 9, minute: 0, second: 0, of: .now
+        ) ?? .now
+
+        var starters: [Job] = []
+        if let kitchen {
+            starters.append(Job(
+                title: "Empty the dishwasher",
+                categoryID: kitchen,
+                effort: .light,
+                recurrence: .daily,
+                startDate: nineAM
+            ))
+        }
+        if let errands {
+            starters.append(Job(
+                title: "Put the bins out",
+                categoryID: errands,
+                effort: .light,
+                recurrence: .weekly([2]), // Monday
+                startDate: nineAM
+            ))
+        }
+        if let cleaning {
+            starters.append(Job(
+                title: "Quick tidy of the lounge",
+                categoryID: cleaning,
+                effort: .medium,
+                recurrence: .weekly([7]), // Saturday
+                startDate: nineAM
+            ))
+        }
+
+        for job in starters {
+            upsertJob(job)
+        }
+    }
 }

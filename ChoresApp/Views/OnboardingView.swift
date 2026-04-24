@@ -1,266 +1,585 @@
 import SwiftUI
 
+/// Color-drenched, one-question-per-screen onboarding in Beem's voice.
+/// Full-bleed scene per step, a generous hero, a single decision zone, and
+/// one obvious CTA. Steps: welcome → name the home → who are you → invite
+/// (optional) → starter kit (optional) → done.
 struct OnboardingView: View {
     @Environment(AppStore.self) private var store
 
     @State private var step: Step = .welcome
+
+    // Draft state
     @State private var householdName: String = ""
     @State private var memberName: String = ""
     @State private var memberEmoji: String = "🦊"
     @State private var memberTint: String = Palette.swatches[4]
+    @State private var inviteChoice: InviteChoice? = nil
+    @State private var useStarters: Bool = true
+
+    // Animation state
     @State private var animateHero = false
+    @State private var placeholderIndex = 0
 
-    private enum Step: Int, CaseIterable { case welcome, household, you }
+    private enum Step: Int, CaseIterable {
+        case welcome, home, you, invite, starters, done
+    }
 
-    private let emojis = ["🦊", "🐻", "🐼", "🦁", "🐨", "🐸", "🐙", "🐯", "🦉", "🐶", "🐱", "🦊"]
+    private let palette: CardPalette = .amber
+
+    private enum InviteChoice { case share, skip }
+
+    private let emojis = ["🦊", "🐻", "🐼", "🦁", "🐨", "🐸", "🐙", "🐯", "🦉", "🐶", "🐱", "🐰"]
+    private let homePlaceholders = ["The Burrow", "Apt 3B", "Flat 2", "Number 12", "Chez nous"]
 
     var body: some View {
-        ZStack {
-            gradient
-                .ignoresSafeArea()
+        GeometryReader { proxy in
+            ZStack(alignment: .topLeading) {
+                background
+                    .ignoresSafeArea()
 
-            VStack(spacing: Spacing.xl) {
-                header
-                    .padding(.top, Spacing.huge)
-
-                Spacer(minLength: 0)
-
-                card
-                    .padding(.horizontal, Spacing.lg)
-
-                Spacer(minLength: 0)
-
-                footerCTA
-                    .padding(.horizontal, Spacing.lg)
-                    .padding(.bottom, Spacing.xl)
+                sceneBody
+                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
             }
         }
         .onAppear { animateHero = true }
     }
 
-    private var gradient: some View {
-        LinearGradient(
-            colors: [
-                Color(hex: "#4D96FF").opacity(0.35),
-                Color(hex: "#A06CD5").opacity(0.25),
-                Color(hex: "#F58FBA").opacity(0.20)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+    // MARK: - Background
+
+    private var background: some View {
+        ZStack {
+            palette.surfaceGradient
+            // Soft color bleed blob for the hero.
+            Circle()
+                .fill(palette.glow.opacity(0.35))
+                .frame(width: 520, height: 520)
+                .blur(radius: 80)
+                .offset(x: -120, y: -260)
+                .opacity(animateHero ? 1 : 0)
+                .animation(.smooth(duration: 1.2), value: animateHero)
+        }
     }
 
-    private var header: some View {
-        VStack(spacing: Spacing.sm) {
-            Image(systemName: "house.lodge.fill")
-                .font(.system(size: 54, weight: .semibold))
-                .foregroundStyle(.white)
-                .symbolEffect(.bounce, value: animateHero)
-                .shadow(color: .black.opacity(0.2), radius: 12, y: 6)
+    // MARK: - Scene body
 
-            Text("Chores, together.")
-                .font(.largeTitle.weight(.bold))
-                .foregroundStyle(.primary)
+    @ViewBuilder
+    private var sceneBody: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            progressDots
+                .padding(.top, Spacing.lg)
 
-            Text("Fair effort · gentle reminders · better days")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            Spacer(minLength: Spacing.lg)
+
+            content
+
+            Spacer(minLength: Spacing.lg)
+
+            footerCTA
+                .padding(.bottom, Spacing.xl)
         }
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, Spacing.lg)
+        .padding(.horizontal, Spacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     @ViewBuilder
-    private var card: some View {
+    private var content: some View {
         switch step {
-        case .welcome: welcomeCard
-        case .household: householdCard
-        case .you: memberCard
+        case .welcome: welcomeScene
+        case .home: homeScene
+        case .you: youScene
+        case .invite: inviteScene
+        case .starters: startersScene
+        case .done: doneScene
         }
     }
 
-    private var welcomeCard: some View {
+    // MARK: - Scenes
+
+    private var welcomeScene: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
-            featureRow(icon: "scalemass", tint: .blue, title: "Balanced effort", detail: "Points reward real work, not just checkmarks.")
-            featureRow(icon: "bell.badge", tint: .orange, title: "Timely reminders", detail: "Recurring notifications you actually want.")
-            featureRow(icon: "wand.and.stars", tint: .purple, title: "Mood-friendly", detail: "Reshuffle tasks when you're low-energy or busy.")
+            Text(Copy.Onboarding.welcomeKicker.uppercased())
+                .font(.caption.weight(.bold))
+                .tracking(2)
+                .foregroundStyle(palette.ink.opacity(0.6))
+
+            Text(Copy.Onboarding.welcomeTitle)
+                .font(.system(size: 40, weight: .black, design: .rounded))
+                .foregroundStyle(palette.ink)
+                .multilineTextAlignment(.leading)
+                .lineLimit(3)
+                .minimumScaleFactor(0.7)
+
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                welcomeBullet(Copy.Onboarding.welcomeBullet1, icon: "scalemass.fill")
+                welcomeBullet(Copy.Onboarding.welcomeBullet2, icon: "bell.fill")
+                welcomeBullet(Copy.Onboarding.welcomeBullet3, icon: "wand.and.stars")
+            }
+            .padding(.top, Spacing.md)
         }
-        .padding(Spacing.xl)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
-        .transition(.asymmetric(insertion: .push(from: .trailing), removal: .push(from: .leading)))
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func featureRow(icon: String, tint: Color, title: String, detail: String) -> some View {
+    private func welcomeBullet(_ text: String, icon: String) -> some View {
         HStack(spacing: Spacing.md) {
             Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(tint.gradient)
-                .frame(width: 44, height: 44)
-                .background(tint.opacity(0.15), in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
-                Text(detail).font(.subheadline).foregroundStyle(.secondary)
-            }
+                .font(.headline)
+                .foregroundStyle(palette.primary)
+                .frame(width: 32)
+            Text(text)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(palette.ink)
+            Spacer(minLength: 0)
         }
     }
 
-    private var householdCard: some View {
+    private var homeScene: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
-            Label("Name your household", systemImage: "house.fill")
-                .font(.headline)
+            sceneHeader(
+                title: Copy.Onboarding.homeTitle,
+                subtitle: Copy.Onboarding.homeSubtitle
+            )
 
-            TextField("e.g. The Burrow", text: $householdName)
-                .textInputAutocapitalization(.words)
-                .textFieldStyle(.plain)
-                .padding(Spacing.md)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
+            bigTextField(
+                text: $householdName,
+                placeholder: homePlaceholders[placeholderIndex],
+                autocapitalize: .words
+            )
+            .onAppear { cyclePlaceholders() }
 
-            Text("You can add more members later.")
-                .font(.caption).foregroundStyle(.secondary)
+            Text(Copy.Onboarding.homeHint)
+                .font(.footnote)
+                .foregroundStyle(palette.inkSoft)
         }
-        .padding(Spacing.xl)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
-        .transition(.asymmetric(insertion: .push(from: .trailing), removal: .push(from: .leading)))
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var memberCard: some View {
+    private var youScene: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
-            Label("Who are you?", systemImage: "person.crop.circle")
-                .font(.headline)
+            sceneHeader(
+                title: Copy.Onboarding.youTitle,
+                subtitle: Copy.Onboarding.youSubtitle
+            )
 
             HStack(alignment: .center, spacing: Spacing.md) {
-                AvatarView(emoji: memberEmoji, tint: Color(hex: memberTint), size: 56)
-                TextField("Your name", text: $memberName)
-                    .textInputAutocapitalization(.words)
-                    .textFieldStyle(.plain)
-                    .lineLimit(1)
-                    // Without `minWidth: 0`, the field’s intrinsic width can push past the screen edge in an HStack.
-                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                    .padding(Spacing.md)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+                AvatarView(emoji: memberEmoji, tint: Color(hex: memberTint), size: 64)
+                    .shadow(color: palette.glow.opacity(0.45), radius: 14)
 
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text("Avatar").font(.caption).foregroundStyle(.secondary)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: Spacing.sm) {
-                        ForEach(emojis.indices, id: \.self) { i in
-                            let e = emojis[i]
-                            Button {
-                                Haptics.selection()
-                                withAnimation(Motion.responsive) { memberEmoji = e }
-                            } label: {
-                                Text(e).font(.title2).frame(width: 40, height: 40)
-                                    .background(
-                                        Circle().fill(memberEmoji == e ? Color.accentColor.opacity(0.25) : .clear)
-                                    )
-                                    .overlay(
-                                        Circle().strokeBorder(memberEmoji == e ? Color.accentColor : .clear, lineWidth: 2)
-                                    )
-                            }
-                            .buttonStyle(.plain)
+                bigTextField(
+                    text: $memberName,
+                    placeholder: Copy.Onboarding.youPlaceholder,
+                    autocapitalize: .words
+                )
+            }
+
+            Text("Avatar")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(palette.inkSoft)
+                .textCase(.uppercase)
+                .tracking(1.2)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Spacing.sm) {
+                    ForEach(emojis, id: \.self) { e in
+                        Button {
+                            Haptics.selection()
+                            withAnimation(Motion.responsive) { memberEmoji = e }
+                        } label: {
+                            Text(e)
+                                .font(.system(size: 28))
+                                .frame(width: 52, height: 52)
+                                .background(
+                                    Circle()
+                                        .fill(memberEmoji == e ? palette.primary.opacity(0.28) : palette.tintedNeutral)
+                                )
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(memberEmoji == e ? palette.primary : Color.clear, lineWidth: 2.5)
+                                )
+                                .scaleEffect(memberEmoji == e ? 1.05 : 1)
                         }
+                        .buttonStyle(.plain)
+                        .animation(Motion.playful, value: memberEmoji)
                     }
-                    .padding(.horizontal, 2)
+                }
+                .padding(.horizontal, 2)
+            }
+
+            Text("Color")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(palette.inkSoft)
+                .textCase(.uppercase)
+                .tracking(1.2)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Spacing.sm) {
+                    ForEach(Palette.swatches, id: \.self) { hex in
+                        Button {
+                            Haptics.selection()
+                            withAnimation(Motion.responsive) { memberTint = hex }
+                        } label: {
+                            Circle()
+                                .fill(Color(hex: hex))
+                                .frame(width: 36, height: 36)
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(Color.white, lineWidth: memberTint == hex ? 3 : 0)
+                                )
+                                .shadow(color: Color(hex: hex).opacity(0.6), radius: memberTint == hex ? 10 : 0)
+                                .scaleEffect(memberTint == hex ? 1.18 : 1)
+                        }
+                        .buttonStyle(.plain)
+                        .animation(Motion.playful, value: memberTint)
+                    }
+                }
+                .padding(.horizontal, 2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var inviteScene: some View {
+        VStack(alignment: .leading, spacing: Spacing.lg) {
+            sceneHeader(
+                title: Copy.Onboarding.inviteTitle,
+                subtitle: Copy.Onboarding.inviteSubtitle
+            )
+
+            VStack(spacing: Spacing.md) {
+                inviteChoiceTile(
+                    .share,
+                    title: Copy.Onboarding.inviteShareCode,
+                    subtitle: "We'll make a 6-digit code.",
+                    icon: "paperplane.fill"
+                )
+                inviteChoiceTile(
+                    .skip,
+                    title: Copy.Onboarding.inviteSkip,
+                    subtitle: "You can always add people later.",
+                    icon: "person.fill"
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func inviteChoiceTile(_ choice: InviteChoice, title: String, subtitle: String, icon: String) -> some View {
+        let selected = inviteChoice == choice
+        return Button {
+            Haptics.selection()
+            withAnimation(Motion.responsive) { inviteChoice = choice }
+        } label: {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: icon)
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(selected ? .white : palette.primary)
+                    .frame(width: 56, height: 56)
+                    .background(
+                        Circle()
+                            .fill(selected ? palette.primary : palette.tintedNeutral)
+                    )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(palette.ink)
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(palette.inkSoft)
+                }
+                Spacer(minLength: 0)
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(palette.primary)
+                        .transition(.scale.combined(with: .opacity))
                 }
             }
+            .padding(Spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                    .fill(palette.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                    .strokeBorder(selected ? palette.primary : palette.ink.opacity(0.08),
+                                  lineWidth: selected ? 2 : 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
 
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text("Color").font(.caption).foregroundStyle(.secondary)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: Spacing.sm) {
-                        ForEach(Palette.swatches, id: \.self) { hex in
-                            Button {
-                                Haptics.selection()
-                                withAnimation(Motion.responsive) { memberTint = hex }
-                            } label: {
-                                Circle()
-                                    .fill(Color(hex: hex))
-                                    .frame(width: 28, height: 28)
-                                    .overlay(
-                                        Circle().strokeBorder(.white, lineWidth: memberTint == hex ? 3 : 0)
-                                    )
-                                    .shadow(color: Color(hex: hex).opacity(0.5), radius: memberTint == hex ? 6 : 0)
-                                    .scaleEffect(memberTint == hex ? 1.12 : 1)
-                                    .animation(Motion.playful, value: memberTint)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.vertical, 2)
+    private var startersScene: some View {
+        VStack(alignment: .leading, spacing: Spacing.lg) {
+            sceneHeader(
+                title: Copy.Onboarding.startersTitle,
+                subtitle: Copy.Onboarding.startersSubtitle
+            )
+
+            VStack(spacing: Spacing.md) {
+                starterChoiceTile(
+                    isSelected: useStarters,
+                    title: Copy.Onboarding.startersContinue,
+                    subtitle: "Dishwasher, bin night, a weekly tidy.",
+                    icon: "sparkles"
+                ) {
+                    Haptics.selection()
+                    withAnimation(Motion.responsive) { useStarters = true }
+                }
+                starterChoiceTile(
+                    isSelected: !useStarters,
+                    title: Copy.Onboarding.startersSkip,
+                    subtitle: "Start with nothing, add your own.",
+                    icon: "tray"
+                ) {
+                    Haptics.selection()
+                    withAnimation(Motion.responsive) { useStarters = false }
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.xl)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
-        .transition(.asymmetric(insertion: .push(from: .trailing), removal: .push(from: .leading)))
+    }
+
+    private func starterChoiceTile(isSelected: Bool, title: String, subtitle: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: icon)
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(isSelected ? .white : palette.primary)
+                    .frame(width: 56, height: 56)
+                    .background(
+                        Circle()
+                            .fill(isSelected ? palette.primary : palette.tintedNeutral)
+                    )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(palette.ink)
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(palette.inkSoft)
+                }
+                Spacer(minLength: 0)
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(palette.primary)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .padding(Spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                    .fill(palette.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                    .strokeBorder(isSelected ? palette.primary : palette.ink.opacity(0.08),
+                                  lineWidth: isSelected ? 2 : 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var doneScene: some View {
+        VStack(alignment: .leading, spacing: Spacing.lg) {
+            Image(systemName: "house.lodge.fill")
+                .font(.system(size: 88, weight: .bold))
+                .foregroundStyle(palette.primary)
+                .symbolEffect(.bounce, value: animateHero)
+                .shadow(color: palette.glow.opacity(0.5), radius: 24)
+
+            Text(Copy.Onboarding.doneTitle)
+                .font(.system(size: 44, weight: .black, design: .rounded))
+                .foregroundStyle(palette.ink)
+                .minimumScaleFactor(0.7)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(Copy.Onboarding.doneSubtitle)
+                .font(.title3.weight(.medium))
+                .foregroundStyle(palette.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Shared building blocks
+
+    private func sceneHeader(title: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Text(title)
+                .font(.system(size: 38, weight: .black, design: .rounded))
+                .foregroundStyle(palette.ink)
+                .minimumScaleFactor(0.6)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(subtitle)
+                .font(.title3)
+                .foregroundStyle(palette.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func bigTextField(
+        text: Binding<String>,
+        placeholder: String,
+        autocapitalize: TextInputAutocapitalization
+    ) -> some View {
+        TextField(placeholder, text: text)
+            .font(.title2.weight(.semibold))
+            .textInputAutocapitalization(autocapitalize)
+            .textFieldStyle(.plain)
+            .padding(.vertical, Spacing.md)
+            .padding(.horizontal, Spacing.md)
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            .lineLimit(1)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                    .fill(palette.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                    .strokeBorder(palette.ink.opacity(0.1), lineWidth: 1)
+            )
+    }
+
+    private var progressDots: some View {
+        HStack(spacing: 6) {
+            ForEach(Step.allCases, id: \.rawValue) { s in
+                Capsule()
+                    .fill(s.rawValue <= step.rawValue ? palette.primary : palette.ink.opacity(0.18))
+                    .frame(width: s == step ? 24 : 8, height: 8)
+                    .animation(Motion.standard, value: step)
+            }
+            Spacer(minLength: 0)
+        }
     }
 
     private var footerCTA: some View {
         HStack(spacing: Spacing.md) {
-            if step != .welcome {
+            if step != .welcome && step != .done {
                 Button {
                     Haptics.tap()
                     withAnimation(Motion.standard) {
                         step = Step(rawValue: step.rawValue - 1) ?? .welcome
                     }
                 } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .labelStyle(.titleOnly)
+                    Image(systemName: "chevron.left")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(palette.ink)
+                        .frame(width: 56, height: 56)
+                        .background(
+                            Circle().fill(palette.surface)
+                        )
+                        .overlay(
+                            Circle().strokeBorder(palette.ink.opacity(0.1), lineWidth: 1)
+                        )
                 }
-                .buttonStyle(.glass)
-                .controlSize(.large)
+                .buttonStyle(.plain)
+                .accessibilityLabel("Back")
             }
 
             Button {
                 advance()
             } label: {
-                Label(ctaTitle, systemImage: ctaIcon)
-                    .frame(maxWidth: .infinity)
-                    .font(.headline)
+                HStack(spacing: Spacing.sm) {
+                    Text(ctaTitle)
+                        .font(.headline.weight(.bold))
+                    Image(systemName: ctaIcon)
+                        .font(.headline.weight(.bold))
+                }
+                .foregroundStyle(Color.white)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .background(
+                    RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                        .fill(palette.primary)
+                )
+                .shadow(color: palette.glow.opacity(0.5), radius: 14, y: 6)
             }
-            .buttonStyle(.glassProminent)
-            .controlSize(.large)
+            .buttonStyle(.plain)
             .disabled(!canAdvance)
-            .sensoryFeedback(.success, trigger: step == .you && canAdvance)
+            .opacity(canAdvance ? 1 : 0.5)
+            .sensoryFeedback(.success, trigger: step == .done)
         }
     }
 
     private var ctaTitle: String {
         switch step {
-        case .welcome: "Get started"
-        case .household: "Continue"
-        case .you: "Create household"
+        case .welcome: return Copy.Onboarding.welcomeStart
+        case .home: return Copy.Onboarding.homeContinue
+        case .you: return Copy.Onboarding.youContinue
+        case .invite: return Copy.Common.done
+        case .starters: return "Let's go"
+        case .done: return Copy.Onboarding.doneCTA
         }
     }
 
     private var ctaIcon: String {
-        step == .you ? "sparkles" : "arrow.right"
+        switch step {
+        case .done: return "sparkles"
+        default: return "arrow.right"
+        }
     }
 
     private var canAdvance: Bool {
         switch step {
-        case .welcome: true
-        case .household: !householdName.trimmed.isEmpty
-        case .you: !memberName.trimmed.isEmpty
+        case .welcome: return true
+        case .home: return !householdName.trimmed.isEmpty
+        case .you: return !memberName.trimmed.isEmpty
+        case .invite: return inviteChoice != nil
+        case .starters: return true
+        case .done: return true
         }
     }
+
+    // MARK: - Flow
 
     private func advance() {
         Haptics.tap(.medium)
         switch step {
         case .welcome:
-            withAnimation(Motion.standard) { step = .household }
-        case .household:
+            withAnimation(Motion.standard) { step = .home }
+        case .home:
             withAnimation(Motion.standard) { step = .you }
         case .you:
-            let me = Member(name: memberName.trimmed, emoji: memberEmoji, tintHex: memberTint, isAdmin: true)
-            withAnimation(Motion.hero) {
-                store.bootstrap(householdName: householdName.trimmed, firstMember: me)
+            withAnimation(Motion.standard) { step = .invite }
+        case .invite:
+            withAnimation(Motion.standard) { step = .starters }
+        case .starters:
+            withAnimation(Motion.standard) { step = .done }
+        case .done:
+            commitOnboarding()
+        }
+    }
+
+    /// Commit everything in one go so `RootView` only flips after the user
+    /// has seen every step of the flow.
+    private func commitOnboarding() {
+        let me = Member(
+            name: memberName.trimmed,
+            emoji: memberEmoji,
+            tintHex: memberTint,
+            isAdmin: true
+        )
+        store.bootstrap(householdName: householdName.trimmed, firstMember: me)
+        if useStarters {
+            store.seedStarterJobs()
+        }
+        Haptics.success()
+    }
+
+    private func cyclePlaceholders() {
+        Task {
+            while step == .home {
+                try? await Task.sleep(for: .seconds(1.8))
+                guard step == .home else { break }
+                withAnimation(.smooth(duration: 0.5)) {
+                    placeholderIndex = (placeholderIndex + 1) % homePlaceholders.count
+                }
             }
-            Haptics.success()
         }
     }
 }

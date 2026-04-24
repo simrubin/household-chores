@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// Reached from `Me → Chore library`. Lists all active templates in the household.
+/// Edits and creation both go through `AddChoreWizardView`.
 struct JobsView: View {
     @Environment(AppStore.self) private var store
     @State private var showEditor = false
@@ -12,64 +14,71 @@ struct JobsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if activeJobs.isEmpty {
-                    EmptyStateView(
-                        title: "No jobs yet",
-                        message: "Create your first recurring chore — vacuum, dishes, bins…",
-                        systemImage: "checklist",
-                        tint: .accentColor,
-                        actionTitle: "Add a job",
-                        action: { showEditor = true }
-                    )
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: Spacing.md) {
-                            ForEach(activeJobs) { job in
-                                Button {
-                                    editingJob = job
-                                } label: {
-                                    jobCard(job)
-                                }
-                                .buttonStyle(.plain)
-                                .pressable()
-                                .contextMenu {
-                                    Button("Edit", systemImage: "pencil") { editingJob = job }
-                                    Button("Archive", systemImage: "archivebox", role: .destructive) {
-                                        withAnimation(Motion.standard) {
-                                            store.archiveJob(job.id)
-                                        }
+        Group {
+            if activeJobs.isEmpty {
+                EmptyStateView(
+                    title: "Nothing on rotation",
+                    message: "Nothing's on rotation yet. Add a chore and it'll live here.",
+                    systemImage: "tray",
+                    tint: CardPalette.coral.primary,
+                    actionTitle: Copy.Hub.addChoreTitle,
+                    action: { showEditor = true }
+                )
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: Spacing.md) {
+                        ForEach(activeJobs) { job in
+                            Button {
+                                editingJob = job
+                            } label: {
+                                jobCard(job)
+                            }
+                            .buttonStyle(.plain)
+                            .pressable()
+                            .contextMenu {
+                                Button(Copy.Common.edit, systemImage: "pencil") { editingJob = job }
+                                Button(Copy.Common.retire, systemImage: "archivebox", role: .destructive) {
+                                    withAnimation(Motion.standard) {
+                                        store.archiveJob(job.id)
                                     }
                                 }
                             }
                         }
-                        .padding(.horizontal, Spacing.lg)
-                        .padding(.vertical, Spacing.md)
                     }
-                    .scrollContentBackground(.hidden)
+                    .padding(.horizontal, Spacing.lg)
+                    .padding(.vertical, Spacing.md)
                 }
-            }
-            .navigationTitle("Jobs")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Haptics.tap()
-                        showEditor = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .buttonStyle(.glass)
-                }
-            }
-            .sheet(isPresented: $showEditor) {
-                JobEditorView()
-            }
-            .sheet(item: $editingJob) { job in
-                JobEditorView(existing: job)
+                .scrollContentBackground(.hidden)
+                .background(backdrop.ignoresSafeArea())
             }
         }
+        .navigationTitle(Copy.Me.choreLibrary)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Haptics.tap()
+                    showEditor = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .buttonStyle(.glass)
+                .accessibilityLabel(Copy.Hub.addChoreTitle)
+            }
+        }
+        .sheet(isPresented: $showEditor) {
+            AddChoreWizardView()
+        }
+        .sheet(item: $editingJob) { job in
+            AddChoreWizardView(existing: job)
+        }
+    }
+
+    private var backdrop: some View {
+        LinearGradient(
+            colors: DayScene.current().backgroundStops(),
+            startPoint: .top, endPoint: .bottom
+        )
     }
 
     private func jobCard(_ job: Job) -> some View {
@@ -83,11 +92,13 @@ struct JobsView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(job.title).font(.headline)
+                Text(job.title)
+                    .font(.headline)
+                    .foregroundStyle(Color.ink)
                 HStack(spacing: Spacing.sm) {
                     Text(job.recurrence.label)
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.inkSoft)
                     Text("·").foregroundStyle(.tertiary)
                     EffortBadge(effort: job.effort, compact: true)
                 }
@@ -101,10 +112,15 @@ struct JobsView: View {
                 Image(systemName: "person.2")
                     .foregroundStyle(.secondary)
                     .frame(width: 32, height: 32)
-                    .background(.white.opacity(0.08), in: Circle())
+                    .background(Color.ink.opacity(0.06), in: Circle())
+                    .accessibilityLabel(Copy.Wizard.whoOpen)
             }
         }
         .padding(Spacing.lg)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
+        .background(Color.surface, in: RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                .strokeBorder(Color.ink.opacity(0.06), lineWidth: 0.5)
+        )
     }
 }
