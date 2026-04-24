@@ -8,7 +8,7 @@ struct InviteCrewCard: View {
     private let palette: CardPalette = .sky
 
     var body: some View {
-        HubCard(palette: palette, minHeight: 160) {
+        HubCard(palette: palette, minHeight: 0, bottomPadding: Spacing.md) {
             VStack(alignment: .leading, spacing: Spacing.lg) {
                 HubTapArea(action: onTap) {
                     HStack(alignment: .top, spacing: Spacing.lg) {
@@ -37,18 +37,21 @@ struct InviteCrewCard: View {
     private var avatarStack: some View {
         ZStack {
             Circle()
-                .fill(palette.tintedNeutral)
+                .fill(palette.primary.opacity(0.25))
                 .frame(width: 46, height: 46)
-                .overlay(Circle().strokeBorder(palette.primary.opacity(0.3), lineWidth: 1))
+                .overlay(Circle().strokeBorder(palette.primary.opacity(0.55), lineWidth: 1))
                 .offset(x: -14, y: 6)
-            Circle()
-                .fill(palette.tintedNeutral)
-                .frame(width: 52, height: 52)
-                .overlay(Circle().strokeBorder(palette.primary.opacity(0.5), lineWidth: 1))
-                .offset(x: 14, y: -6)
-            Image(systemName: "plus")
-                .font(.headline.weight(.heavy))
-                .foregroundStyle(palette.primary)
+            ZStack {
+                Circle()
+                    .fill(palette.primary.gradient)
+                    .frame(width: 52, height: 52)
+                    .shadow(color: palette.glow, radius: 12, y: 5)
+                    .overlay(Circle().strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5))
+                Image(systemName: "plus")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(.white)
+            }
+            .offset(x: 14, y: -6)
         }
         .frame(width: 80, height: 70)
     }

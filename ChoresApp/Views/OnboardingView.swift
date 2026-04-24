@@ -25,7 +25,7 @@ struct OnboardingView: View {
         case welcome, home, you, invite, starters, done
     }
 
-    private let palette: CardPalette = .amber
+    private let palette: CardPalette = .petal
 
     private enum InviteChoice { case share, skip }
 

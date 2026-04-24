@@ -16,6 +16,8 @@ enum CardPalette: String, CaseIterable, Hashable, Sendable {
     case sky
     /// Heading out (contextual)
     case sage
+    /// Onboarding — soft warm peach, low chroma, very inviting
+    case petal
 
     // MARK: Core hue coordinates
 
@@ -28,6 +30,7 @@ enum CardPalette: String, CaseIterable, Hashable, Sendable {
         case .coral:  return (0.75, 0.15, 25)
         case .sky:    return (0.80, 0.10, 235)
         case .sage:   return (0.80, 0.08, 140)
+        case .petal:  return (0.88, 0.07, 25)
         }
     }
 

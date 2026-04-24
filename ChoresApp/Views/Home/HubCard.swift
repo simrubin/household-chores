@@ -9,21 +9,26 @@ import SwiftUI
 struct HubCard<Content: View>: View {
     let palette: CardPalette
     let minHeight: CGFloat
+    let bottomPadding: CGFloat
     @ViewBuilder let content: () -> Content
 
     init(
         palette: CardPalette,
         minHeight: CGFloat = 140,
+        bottomPadding: CGFloat = Spacing.xl,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.palette = palette
         self.minHeight = minHeight
+        self.bottomPadding = bottomPadding
         self.content = content
     }
 
     var body: some View {
         content()
-            .padding(Spacing.xl)
+            .padding(.horizontal, Spacing.xl)
+            .padding(.top, Spacing.xl)
+            .padding(.bottom, bottomPadding)
             .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .leading)
             .background(palette.surfaceGradient)
             .clipShape(RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
