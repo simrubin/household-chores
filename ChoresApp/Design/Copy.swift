@@ -22,6 +22,8 @@ enum Copy {
         static let doItNowEmptyTitle = "Inbox zero"
         static let doItNowEmptySubtitle = "Nothing on your plate. Enjoy."
         static let doItNowPrimary = "Done"
+        /// Short label for swipe-to-defer on home hub (backed by skip / next rotation).
+        static let laterSwipe = "Later"
         static let doItNowMore: (Int) -> String = { n in
             n == 0 ? "Last one" : "\(n) more today"
         }

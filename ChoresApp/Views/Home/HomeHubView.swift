@@ -103,14 +103,12 @@ struct HomeHubView: View {
             if visibleToday.isEmpty {
                 emptyChoreState
                     .padding(.horizontal, Spacing.lg)
+                Spacer(minLength: 0)
             } else {
-                choreList
-                    .padding(.horizontal, Spacing.lg)
+                choreScrollList
             }
-
-            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     // MARK: - Header
@@ -174,56 +172,59 @@ struct HomeHubView: View {
         .padding(.top, Spacing.md)
     }
 
-    private var choreList: some View {
-        let rows = Array(visibleToday.prefix(7))
-        let hasMore = visibleToday.count > 7
-        return VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(rows.enumerated()), id: \.element.id) { idx, occ in
-                choreRow(occ)
-                if idx < rows.count - 1 {
-                    Rectangle()
-                        .fill(Color.ink.opacity(0.06))
-                        .frame(height: 0.5)
+    /// Vertical fade so list content softens at scroll edges.
+    private var choreListScrollEdgeMask: LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: .clear, location: 0),
+                .init(color: .black, location: 0.06),
+                .init(color: .black, location: 0.94),
+                .init(color: .clear, location: 1)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    /// Scrollable list with system swipe actions (leading = later, trailing = done).
+    private var choreScrollList: some View {
+        List {
+            ForEach(visibleToday) { occ in
+                HubChoreRow(
+                    occurrence: occ,
+                    assignee: store.member(occ.assigneeID),
+                    onComplete: { completeOccurrenceOnHub(occ) },
+                    onOpenToday: { path.append(HubRoute.doItNow) }
+                )
+                .listRowInsets(EdgeInsets(top: HubChoreRow.rowVerticalInset, leading: Spacing.lg, bottom: HubChoreRow.rowVerticalInset, trailing: Spacing.lg))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                    Button {
+                        delayOccurrenceOnHub(occ)
+                    } label: {
+                        Label(Copy.Hub.laterSwipe, systemImage: "calendar.badge.clock")
+                    }
+                    .tint(.orange)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button {
+                        completeOccurrenceOnHub(occ)
+                    } label: {
+                        Label(Copy.Hub.doItNowPrimary, systemImage: "checkmark.circle.fill")
+                    }
+                    .tint(Color.hubSwipeComplete)
                 }
             }
         }
-        .mask(
-            LinearGradient(
-                stops: [
-                    .init(color: .black, location: 0),
-                    .init(color: .black, location: hasMore ? 0.72 : 0.88),
-                    .init(color: .clear, location: 1.0)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.top, Spacing.xl, for: .scrollContent)
+        .environment(\.defaultMinListRowHeight, HubChoreRow.listCellHeight)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .mask(choreListScrollEdgeMask)
         .animation(Motion.standard, value: mood)
-    }
-
-    private func choreRow(_ occ: Occurrence) -> some View {
-        HStack(spacing: Spacing.md) {
-            Circle()
-                .fill(Color.accentColor.opacity(occ.isCompleted ? 0.22 : 0.85))
-                .frame(width: 7, height: 7)
-
-            Text(occ.title)
-                .font(.system(.body, weight: occ.isCompleted ? .regular : .medium))
-                .foregroundStyle(occ.isCompleted ? Color.inkSoft : Color.ink)
-                .strikethrough(occ.isCompleted, color: Color.inkSoft)
-                .lineLimit(1)
-
-            Spacer()
-
-            if occ.isCompleted {
-                Image(systemName: "checkmark")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.inkSoft)
-            }
-        }
-        .padding(.vertical, 11)
-        .contentShape(Rectangle())
-        .onTapGesture { path.append(HubRoute.doItNow) }
+        .animation(Motion.standard, value: visibleToday.map(\.id))
     }
 
     // MARK: - Action zone (bottom 40%)
@@ -292,6 +293,169 @@ struct HomeHubView: View {
         Haptics.tap()
         withAnimation(Motion.emphasize) {
             store.setMood(.none, for: id)
+        }
+    }
+
+    private func completeOccurrenceOnHub(_ occ: Occurrence) {
+        let verdict = CompletionVerdict.build(for: occ, in: store)
+        Haptics.success()
+        withAnimation(Motion.playful) {
+            store.completeOccurrence(occ.id)
+        }
+        completionPayload = CompletionPayload(
+            title: occ.title,
+            karmaDelta: occ.effort.points,
+            verdict: verdict.text,
+            tint: occ.effort.tint
+        )
+    }
+
+    /// Defers out of today by marking skipped; next instance comes from job recurrence.
+    private func delayOccurrenceOnHub(_ occ: Occurrence) {
+        Haptics.warning()
+        withAnimation(Motion.standard) {
+            store.skipOccurrence(occ.id)
+        }
+    }
+}
+
+// MARK: - Hub chore row
+
+/// Compact row: checkbox, title, assignee + due line, avatar. Checkbox uses the same
+/// playful complete animation as `OccurrenceRow`; swipes use native `swipeActions`.
+private struct HubChoreRow: View {
+    static let rowVerticalInset: CGFloat = 6
+    /// Card content min height; with `listRowInsets` top+bottom matches `listCellHeight`.
+    private static let cardBodyMinHeight: CGFloat = 64
+    /// Matches List `defaultMinListRowHeight`: card + vertical list insets.
+    static var listCellHeight: CGFloat { cardBodyMinHeight + rowVerticalInset * 2 }
+
+    let occurrence: Occurrence
+    let assignee: Member?
+    let onComplete: () -> Void
+    let onOpenToday: () -> Void
+
+    @State private var isCompleting = false
+
+    private static let timeFmt: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        f.dateStyle = .none
+        return f
+    }()
+
+    private var assigneeCaption: String {
+        guard let assignee else { return "Anyone" }
+        if let first = assignee.name.split(separator: " ").first {
+            return String(first)
+        }
+        return assignee.name
+    }
+
+    private var dueMeta: (text: String, color: Color) {
+        let startOfToday = Calendar.current.startOfDay(for: .now)
+        if occurrence.dueDate < startOfToday {
+            return (Copy.Activity.wasYesterday, Color.red.opacity(0.88))
+        }
+        let t = Self.timeFmt.string(from: occurrence.dueDate)
+        return ("Today · \(t)", Color.inkSoft)
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: Spacing.md) {
+            checkbox
+                .frame(width: 36, height: 36)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(occurrence.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.ink)
+                    .lineLimit(2)
+
+                HStack(spacing: Spacing.xs) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 9, weight: .semibold))
+                        Text(assigneeCaption)
+                    }
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Color.inkSoft)
+
+                    Text("·")
+                        .font(.caption2)
+                        .foregroundStyle(.quaternary)
+
+                    Text(dueMeta.text)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(dueMeta.color)
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.selection()
+                onOpenToday()
+            }
+
+            if let assignee {
+                AvatarView(emoji: assignee.emoji, tint: assignee.tint, size: 28)
+            } else {
+                Image(systemName: "person.2")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.inkSoft)
+                    .frame(width: 28, height: 28)
+                    .background(Color.ink.opacity(0.06), in: Circle())
+                    .accessibilityLabel(Copy.Wizard.whoOpen)
+            }
+        }
+        .padding(.vertical, Spacing.sm)
+        .padding(.horizontal, Spacing.md)
+        .frame(maxWidth: .infinity, minHeight: Self.cardBodyMinHeight, alignment: .center)
+        .background(Color.surface, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                .strokeBorder(Color.ink.opacity(0.06), lineWidth: 0.5)
+        )
+        .opacity(isCompleting ? 0.78 : 1)
+        .scaleEffect(isCompleting ? 0.98 : 1)
+        .animation(Motion.responsive, value: isCompleting)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Swipe left for done, right for later. Tap chore title opens the full Today list.")
+        .sensoryFeedback(.success, trigger: isCompleting)
+    }
+
+    private var checkbox: some View {
+        Button(action: triggerCheckboxComplete) {
+            ZStack {
+                Circle()
+                    .strokeBorder(Color.inkSoft.opacity(0.55), lineWidth: 1.5)
+                    .frame(width: 24, height: 24)
+
+                if isCompleting {
+                    Circle()
+                        .fill(occurrence.effort.tint)
+                        .frame(width: 24, height: 24)
+                        .transition(.scale.combined(with: .opacity))
+
+                    Image(systemName: "checkmark")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                        .transition(.scale.combined(with: .opacity))
+                        .symbolEffect(.bounce, value: isCompleting)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(Copy.Hub.doItNowPrimary) \(occurrence.title)")
+    }
+
+    private func triggerCheckboxComplete() {
+        guard !isCompleting else { return }
+        withAnimation(Motion.playful) { isCompleting = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+            onComplete()
         }
     }
 }

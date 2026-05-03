@@ -105,4 +105,6 @@ extension Color {
     static let inkSoft = Color(oklch: 0.50, 0.016, 76)
     /// Eggshell — primary surface background for rows, cards.
     static let surface = Color(hex: "#fdfcfc")
+    /// Home hub swipe-to-complete — darker green for trailing action.
+    static let hubSwipeComplete = Color(hex: "#34785c")
 }
