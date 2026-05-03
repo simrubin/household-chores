@@ -90,8 +90,12 @@ struct CategoryEditorSheet: View {
         NavigationStack {
             Form {
                 Section("Name") {
-                    TextField("e.g. Garden", text: $name)
-                        .textInputAutocapitalization(.words)
+                    BareTextField(
+                        text: $name,
+                        placeholder: "e.g. Garden",
+                        font: .body,
+                        autocapitalize: .words
+                    )
                 }
 
                 Section("Icon") {

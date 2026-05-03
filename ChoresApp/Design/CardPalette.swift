@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// "Committed color strategy" tokens for the Home Hub. Each hue carries
-/// 30–60% of its card surface. Values are OKLCH (perceptual), emitted to sRGB
-/// by `Color(oklch:_:_:)` in `Tokens.swift`.
+/// Warm-grey card palette. Every case maps to a different lightness step
+/// within the Eggshell→Chalk scale, keeping cards visually distinct without
+/// introducing chroma. Low-chroma OKLCH (C ≤ 0.012, H 75–80) ensures all
+/// surfaces read as refined warm grey.
 enum CardPalette: String, CaseIterable, Hashable, Sendable {
     /// Do it now
     case amber
@@ -16,70 +17,65 @@ enum CardPalette: String, CaseIterable, Hashable, Sendable {
     case sky
     /// Heading out (contextual)
     case sage
-    /// Onboarding — soft warm peach, low chroma, very inviting
+    /// Onboarding — softest warm grey, very inviting
     case petal
 
-    // MARK: Core hue coordinates
+    // MARK: Core lightness coordinates (all warm grey, varying L only)
 
-    /// Base (L, C, H) used by the surface fill.
+    /// Base (L, C, H). C is intentionally ≤ 0.012 so every card reads as
+    /// a warm grey surface — never chromatic.
     var base: (L: Double, C: Double, H: Double) {
         switch self {
-        case .amber:  return (0.80, 0.14, 75)
-        case .indigo: return (0.62, 0.13, 275)
-        case .teal:   return (0.75, 0.11, 190)
-        case .coral:  return (0.75, 0.15, 25)
-        case .sky:    return (0.80, 0.10, 235)
-        case .sage:   return (0.80, 0.08, 140)
-        case .petal:  return (0.88, 0.07, 25)
+        case .amber:  return (0.88, 0.011, 76)   // powder-warm — primary CTA card
+        case .indigo: return (0.91, 0.008, 75)   // light warm grey
+        case .teal:   return (0.86, 0.010, 75)   // chalk-warm — slightly deeper
+        case .coral:  return (0.93, 0.007, 78)   // very light warm grey
+        case .sky:    return (0.95, 0.005, 75)   // near-eggshell
+        case .sage:   return (0.89, 0.011, 78)   // warm medium grey
+        case .petal:  return (0.96, 0.004, 75)   // lightest — close to eggshell
         }
     }
 
     // MARK: Derived roles
 
-    /// Card surface — the dominant 30–60% block of color.
+    /// Card surface — the dominant fill.
     var surface: Color {
         let c = base
-        return Color(oklch: c.L, c.C * 0.9, c.H)
+        return Color(oklch: c.L, c.C, c.H)
     }
 
-    /// Slightly deeper, used for the primary button inside the card.
+    /// Dark charcoal used for primary CTA button backgrounds (white text on top).
     var primary: Color {
-        let c = base
-        return Color(oklch: c.L * 0.78, c.C * 1.05, c.H)
+        return Color(oklch: 0.22, 0.010, 75)
     }
 
-    /// Readable ink on top of `surface`. Same hue, very dark, tiny chroma.
+    /// Near-black warm ink for headings and primary labels.
     var ink: Color {
-        let c = base
-        return Color(oklch: 0.22, 0.02, c.H)
+        return Color(oklch: 0.16, 0.008, 75)
     }
 
-    /// Secondary ink — for captions / supporting copy.
+    /// Warm Gravel-equivalent ink for captions and secondary copy.
     var inkSoft: Color {
-        let c = base
-        return Color(oklch: 0.40, 0.02, c.H)
+        return Color(oklch: 0.50, 0.016, 76)
     }
 
-    /// Neutral tinted toward the card hue (C 0.008) — used for inside-card
-    /// mini-surfaces (e.g. a chip that isn't itself a card).
+    /// Near-eggshell used for chip / mini-surface backgrounds inside cards.
     var tintedNeutral: Color {
-        let c = base
-        return Color(oklch: 0.95, 0.008, c.H)
+        return Color(oklch: 0.97, 0.006, 76)
     }
 
-    /// Glow color for shadows under the card.
+    /// Very subtle warm grey shadow for cards — never colored.
     var glow: Color {
-        let c = base
-        return Color(oklch: c.L * 0.7, c.C, c.H, opacity: 0.35)
+        return Color(oklch: 0.55, 0.008, 75, opacity: 0.06)
     }
 
-    /// A two-stop vertical gradient using the surface tone — subtle, not flashy.
+    /// Two-stop gradient: slightly lighter top-leading → base bottom-trailing.
     var surfaceGradient: LinearGradient {
         let c = base
         return LinearGradient(
             colors: [
-                Color(oklch: min(c.L + 0.04, 0.98), c.C * 0.85, c.H),
-                Color(oklch: c.L, c.C * 0.95, c.H)
+                Color(oklch: min(c.L + 0.025, 0.98), 0.005, 78),
+                Color(oklch: c.L, 0.010, 75)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -88,7 +84,7 @@ enum CardPalette: String, CaseIterable, Hashable, Sendable {
 
     // MARK: Mood variants (used by MoodSheet and MoodCard)
 
-    /// Maps a MoodPreset to a palette for color-drenched treatments.
+    /// Maps a MoodPreset to a palette variant — all warm grey, just varying depth.
     static func palette(for preset: MoodPreset) -> CardPalette {
         switch preset {
         case .none: return .teal
@@ -99,12 +95,14 @@ enum CardPalette: String, CaseIterable, Hashable, Sendable {
     }
 }
 
-// MARK: - App-wide neutrals (tinted grays)
+// MARK: - App-wide semantic neutrals
 
-/// Warm ink that replaces `.primary` for headings inside hub surfaces.
-/// Slightly bluish to stay legible on all card hues.
+/// Warm grey semantic colors. Used directly throughout all views.
 extension Color {
-    static let ink = Color(oklch: 0.20, 0.01, 265)
-    static let inkSoft = Color(oklch: 0.45, 0.01, 265)
-    static let surface = Color(oklch: 0.985, 0.003, 80)
+    /// Near-black warm ink — Obsidian. Primary text, icon fills.
+    static let ink = Color(oklch: 0.16, 0.008, 75)
+    /// Warm Gravel — secondary body text, nav items, subheadings.
+    static let inkSoft = Color(oklch: 0.50, 0.016, 76)
+    /// Eggshell — primary surface background for rows, cards.
+    static let surface = Color(hex: "#fdfcfc")
 }

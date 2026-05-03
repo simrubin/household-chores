@@ -1,0 +1,39 @@
+---
+description: After every code change, build and deploy to Simeon's iPhone
+alwaysApply: true
+---
+
+# Deploy to Device After Every Change
+
+After making any code change to the project, you MUST build and install the app on the connected iPhone using `xcodebuild`. Do not consider a task complete until the build succeeds and the app is running on device.
+
+## Build & Deploy Commands
+
+**Step 1 — Build:**
+```bash
+xcodebuild \
+  -project ChoresApp.xcodeproj \
+  -scheme ChoresApp \
+  -destination 'id=B69F2F50-46C4-55A2-B259-F1FA98FBF817' \
+  -configuration Debug \
+  build \
+  CODE_SIGNING_ALLOWED=YES \
+  2>&1 | tail -20
+```
+
+**Step 2 — Install on device:**
+```bash
+xcrun devicectl device install app \
+  --device B69F2F50-46C4-55A2-B259-F1FA98FBF817 \
+  /Users/simeonrubin/Library/Developer/Xcode/DerivedData/ChoresApp-cxffvpxauigyvzaqawqntuvowfkm/Build/Products/Debug-iphoneos/ChoresApp.app
+```
+
+- Device: **Simeon's iPhone 15 Pro** (`B69F2F50-46C4-55A2-B259-F1FA98FBF817`)
+- Project: `ChoresApp.xcodeproj`
+- Scheme: `ChoresApp`
+
+## Rules
+
+- Run the build command after **every** set of code changes, before finishing your turn.
+- If the build fails, fix the errors and rebuild until it succeeds.
+- Report the build result (success or errors) to the user.

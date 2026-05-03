@@ -187,8 +187,8 @@ struct AddChoreWizardView: View {
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, minHeight: 56)
-                .background(Color.ink.gradient, in: Capsule())
-                .shadow(color: Color.ink.opacity(0.35), radius: 10, y: 4)
+                .background(Color.ink, in: Capsule())
+                .shadow(color: Color.ink.opacity(0.08), radius: 4, y: 2)
             }
             .buttonStyle(.plain)
             .pressable(scale: 0.97)

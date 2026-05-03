@@ -68,9 +68,9 @@ struct MoodCard: View {
     private func moodOrb(symbol: String, palette: CardPalette) -> some View {
         ZStack {
             Circle()
-                .fill(palette.primary.gradient)
+                        .fill(palette.primary)
                 .frame(width: 68, height: 68)
-                .shadow(color: palette.glow, radius: 14, y: 6)
+                .shadow(color: palette.glow, radius: 7, y: 3)
             Image(systemName: symbol)
                 .font(.title2.weight(.bold))
                 .foregroundStyle(.white)

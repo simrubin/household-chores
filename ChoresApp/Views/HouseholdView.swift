@@ -185,9 +185,9 @@ struct BalanceChart: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .fill(Color.ink.opacity(0.06))
                             RoundedRectangle(cornerRadius: 10)
-                                .fill(item.member.tint.gradient)
+                                .fill(item.member.tint)
                                 .frame(height: appeared ? barHeight(for: item.points, available: geo.size.height - 60) : 0)
-                                .shadow(color: item.member.tint.opacity(0.5), radius: 8, y: 3)
+                                .shadow(color: item.member.tint.opacity(0.2), radius: 4, y: 2)
                                 .animation(
                                     .spring(response: 0.55, dampingFraction: 0.82).delay(Double(index) * 0.04),
                                     value: appeared

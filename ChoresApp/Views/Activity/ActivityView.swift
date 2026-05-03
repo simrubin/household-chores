@@ -159,9 +159,9 @@ struct ActivityView: View {
             } else {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.title3)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(Color.gravel)
                     .frame(width: 36, height: 36)
-                    .background(.green.opacity(0.15), in: Circle())
+                    .background(Color.gravel.opacity(0.12), in: Circle())
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(Copy.Activity.completedBy(name, occ.title))
@@ -181,11 +181,11 @@ struct ActivityView: View {
                 }
             }
             Spacer(minLength: 0)
-            Text(Copy.Completion.karmaDelta(occ.effort.points))
-                .font(.footnote.weight(.bold).monospacedDigit())
-                .foregroundStyle(.yellow)
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(.yellow.opacity(0.15), in: Capsule())
+                Text(Copy.Completion.karmaDelta(occ.effort.points))
+                    .font(.footnote.weight(.bold).monospacedDigit())
+                    .foregroundStyle(Color.cinder)
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .background(Color.ink.opacity(0.07), in: Capsule())
         }
         .padding(Spacing.md)
         .background(Color.surface, in: RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))

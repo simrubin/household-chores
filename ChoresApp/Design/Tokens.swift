@@ -83,6 +83,27 @@ extension Color {
     }
 }
 
+/// Named warm-grey palette tokens — the single source of truth for every
+/// surface, border, and text color in the app.
+extension Color {
+    /// `#fdfcfc` — page background, primary surface.
+    static let eggshell = Color(hex: "#fdfcfc")
+    /// `#f5f3f1` — secondary surface, subtle section backgrounds.
+    static let powder   = Color(hex: "#f5f3f1")
+    /// `#e5e5e5` — borders, dividers, card outlines.
+    static let chalk    = Color(hex: "#e5e5e5")
+    /// `#b1b0b0` — disabled states, placeholder elements.
+    static let fog      = Color(hex: "#b1b0b0")
+    /// `#a59f97` — tertiary text, icon strokes, deemphasized labels.
+    static let slate    = Color(hex: "#a59f97")
+    /// `#777169` — secondary body text, nav items, subheadings.
+    static let gravel   = Color(hex: "#777169")
+    /// `#57534e` — mid-tone text, secondary headings on light surfaces.
+    static let cinder   = Color(hex: "#57534e")
+    /// `#000000` — primary text, filled CTA button fills.
+    static let obsidian = Color(hex: "#000000")
+}
+
 /// Curated palette for categories/members. Stored as hex so models stay Codable.
 enum Palette {
     static let swatches: [String] = [
@@ -110,35 +131,9 @@ enum DayScene {
         }
     }
 
-    /// A three-stop background gradient tinted for the scene. Always light.
-    /// Evening nudges warmer + a touch darker — never full dark mode.
+    /// Flat Chalk (`#E5E5E5`) background — no gradient, consistent across all scenes.
     func backgroundStops() -> [Color] {
-        switch self {
-        case .morning:
-            return [
-                Color(oklch: 0.98, 0.02, 80),
-                Color(oklch: 0.96, 0.04, 60),
-                Color(oklch: 0.97, 0.02, 40)
-            ]
-        case .day:
-            return [
-                Color(oklch: 0.98, 0.01, 230),
-                Color(oklch: 0.97, 0.02, 220),
-                Color(oklch: 0.98, 0.01, 210)
-            ]
-        case .evening:
-            return [
-                Color(oklch: 0.94, 0.05, 40),
-                Color(oklch: 0.90, 0.07, 25),
-                Color(oklch: 0.86, 0.08, 300)
-            ]
-        case .night:
-            return [
-                Color(oklch: 0.86, 0.06, 280),
-                Color(oklch: 0.82, 0.08, 270),
-                Color(oklch: 0.78, 0.08, 260)
-            ]
-        }
+        return [Color.chalk, Color.chalk]
     }
 
     /// One-word mood label for the hub header greeting, per tone guide.

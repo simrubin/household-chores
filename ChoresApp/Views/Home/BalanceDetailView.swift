@@ -34,7 +34,7 @@ struct BalanceDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.lg) {
                 Text(Copy.Hub.balanceTitle)
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                    .font(.system(.largeTitle, weight: .bold))
                     .foregroundStyle(Color.ink)
 
                 Picker("Window", selection: $window.animation(Motion.standard)) {

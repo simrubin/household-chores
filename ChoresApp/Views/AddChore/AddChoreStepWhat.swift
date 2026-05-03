@@ -14,35 +14,20 @@ struct AddChoreStepWhat: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.xl) {
                 Text(Copy.Wizard.whatTitle)
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                    .font(.system(.largeTitle, weight: .bold))
                     .foregroundStyle(Color.ink)
                     .padding(.top, Spacing.lg)
 
                 // Giant text field
-                ZStack(alignment: .leading) {
-                    if title.isEmpty {
-                        Text(Copy.Wizard.whatFieldPlaceholders[placeholderIndex])
-                            .font(.system(.title, design: .rounded, weight: .semibold))
-                            .foregroundStyle(Color.inkSoft.opacity(0.6))
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                            .id(placeholderIndex)
-                    }
-                    TextField("", text: $title, axis: .vertical)
-                        .font(.system(.title, design: .rounded, weight: .semibold))
-                        .foregroundStyle(Color.ink)
-                        .textInputAutocapitalization(.sentences)
-                        .tint(Color.ink)
-                        .focused($isTitleFocused)
-                        .lineLimit(1...3)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Spacing.lg)
-                .background(Color.surface, in: RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
-                        .strokeBorder(Color.ink.opacity(isTitleFocused ? 0.25 : 0.08), lineWidth: isTitleFocused ? 2 : 1)
+                BareTextField(
+                    text: $title,
+                    placeholder: Copy.Wizard.whatFieldPlaceholders[placeholderIndex],
+                    font: .system(.title, weight: .semibold),
+                    autocapitalize: .sentences,
+                    axis: .vertical
                 )
-                .animation(Motion.responsive, value: isTitleFocused)
+                .focused($isTitleFocused)
+                .padding(Spacing.lg)
 
                 // Category heading + grid
                 VStack(alignment: .leading, spacing: Spacing.md) {
@@ -86,8 +71,8 @@ struct AddChoreStepWhat: View {
             .background {
                 if selected {
                     RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
-                        .fill(cat.tint.gradient)
-                        .shadow(color: cat.tint.opacity(0.4), radius: 12, y: 6)
+                        .fill(cat.tint)
+                        .shadow(color: cat.tint.opacity(0.18), radius: 6, y: 3)
                 } else {
                     RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
                         .fill(cat.tint.opacity(0.12))

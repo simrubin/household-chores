@@ -23,8 +23,12 @@ struct MemberEditorView: View {
         NavigationStack {
             Form {
                 Section("Name") {
-                    TextField("e.g. Alex", text: $name)
-                        .textInputAutocapitalization(.words)
+                    BareTextField(
+                        text: $name,
+                        placeholder: "e.g. Alex",
+                        font: .body,
+                        autocapitalize: .words
+                    )
                 }
 
                 Section("Avatar") {
@@ -43,7 +47,7 @@ struct MemberEditorView: View {
                                     .font(.title2)
                                     .frame(width: 44, height: 44)
                                     .background(
-                                        Circle().fill(emoji == e ? Color.accentColor.opacity(0.25) : .clear)
+                                        Circle().fill(emoji == e ? Color.accentColor.opacity(0.18) : .clear)
                                     )
                                     .overlay(Circle().strokeBorder(emoji == e ? Color.accentColor : .clear, lineWidth: 2))
                             }
@@ -66,7 +70,7 @@ struct MemberEditorView: View {
                                     .fill(Color(hex: hex))
                                     .frame(width: 32, height: 32)
                                     .overlay(Circle().strokeBorder(.white, lineWidth: tintHex == hex ? 3 : 0))
-                                    .shadow(color: Color(hex: hex).opacity(0.55), radius: tintHex == hex ? 8 : 0)
+                                    .shadow(color: Color(hex: hex).opacity(0.25), radius: tintHex == hex ? 5 : 0)
                                     .scaleEffect(tintHex == hex ? 1.15 : 1)
                             }
                             .buttonStyle(.plain)

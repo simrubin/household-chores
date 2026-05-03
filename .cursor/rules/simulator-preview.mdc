@@ -1,0 +1,62 @@
+---
+description: Build and preview app in iOS Simulator via serve-sim after code changes
+alwaysApply: true
+---
+
+# Simulator Preview via serve-sim
+
+After making code changes, build and preview in the iOS Simulator so you can visually verify the result.
+
+## Simulator Details
+
+- **Device:** iPhone 17 Pro (iOS 26.4)
+- **UDID:** `A2EB7DAA-E049-4514-BCB6-C01ADD012BEC`
+- **Bundle ID:** `SimeonRubin.ChoresApp`
+- **Preview URL:** `http://localhost:3200`
+
+## Step 1 — Ensure simulator is booted
+
+```bash
+xcrun simctl boot A2EB7DAA-E049-4514-BCB6-C01ADD012BEC 2>/dev/null || true
+```
+
+## Step 2 — Ensure serve-sim is running
+
+```bash
+npx serve-sim --list 2>/dev/null | grep -q "A2EB7DAA" || npx serve-sim --detach
+# Then start the preview server if not running:
+curl -sf http://localhost:3200 > /dev/null || (npx serve-sim &)
+```
+
+## Step 3 — Build for simulator
+
+```bash
+xcodebuild \
+  -project ChoresApp.xcodeproj \
+  -scheme ChoresApp \
+  -destination 'id=A2EB7DAA-E049-4514-BCB6-C01ADD012BEC' \
+  -configuration Debug \
+  build \
+  CODE_SIGNING_ALLOWED=YES \
+  2>&1 | tail -20
+```
+
+## Step 4 — Install and launch on simulator
+
+```bash
+xcrun simctl install A2EB7DAA-E049-4514-BCB6-C01ADD012BEC \
+  /Users/simeonrubin/Library/Developer/Xcode/DerivedData/ChoresApp-cxffvpxauigyvzaqawqntuvowfkm/Build/Products/Debug-iphonesimulator/ChoresApp.app
+
+xcrun simctl launch --terminate-running-process A2EB7DAA-E049-4514-BCB6-C01ADD012BEC SimeonRubin.ChoresApp
+```
+
+## Step 5 — Visual verification
+
+After launching, use the `cursor-ide-browser` MCP to navigate to `http://localhost:3200` and take a screenshot to visually confirm the UI looks correct. Report what you see.
+
+## Rules
+
+- Always run these steps after every set of code changes, before finishing your turn.
+- If the build fails, fix errors and rebuild until it succeeds.
+- Use the browser MCP to visually verify every significant UI change.
+- Report the visual result (screenshot description) to the user.

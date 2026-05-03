@@ -11,7 +11,7 @@ struct AddChoreStepWhoEffort: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.xl) {
                 Text(Copy.Wizard.whoEffortTitle)
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                    .font(.system(.largeTitle, weight: .bold))
                     .foregroundStyle(Color.ink)
                     .padding(.top, Spacing.lg)
 
@@ -59,7 +59,7 @@ struct AddChoreStepWhoEffort: View {
             HStack(spacing: Spacing.lg) {
                 ZStack {
                     Circle()
-                        .fill(selected ? level.tint.gradient : Color.ink.opacity(0.07).gradient)
+                        .fill(selected ? level.tint : Color.ink.opacity(0.07))
                         .frame(width: 48, height: 48)
                     Image(systemName: level.symbolName)
                         .font(.title3.weight(.semibold))
@@ -88,8 +88,8 @@ struct AddChoreStepWhoEffort: View {
             .background {
                 if selected {
                     RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
-                        .fill(level.tint.gradient)
-                        .shadow(color: level.tint.opacity(0.4), radius: 10, y: 5)
+                        .fill(level.tint)
+                        .shadow(color: level.tint.opacity(0.18), radius: 5, y: 3)
                 } else {
                     RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
                         .fill(Color.ink.opacity(0.05))

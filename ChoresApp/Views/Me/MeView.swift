@@ -68,7 +68,7 @@ struct MeView: View {
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(me?.name ?? "You")
-                        .font(.system(.title2, design: .rounded, weight: .bold))
+                        .font(.system(.title2, weight: .bold))
                         .foregroundStyle(CardPalette.sage.ink)
                     Text(Copy.Me.signedInAs)
                         .font(.caption.weight(.semibold))
@@ -108,7 +108,7 @@ struct MeView: View {
                 .tracking(0.6)
                 .foregroundStyle(CardPalette.teal.inkSoft)
             Text("\(value)")
-                .font(.system(size: emphasize ? 44 : 28, weight: .heavy, design: .rounded))
+                .font(.system(size: emphasize ? 44 : 28, weight: .heavy))
                 .monospacedDigit()
                 .contentTransition(.numericText(value: Double(value)))
                 .foregroundStyle(CardPalette.teal.ink)
@@ -151,7 +151,7 @@ struct MeView: View {
         HStack(spacing: Spacing.md) {
             ZStack {
                 Circle()
-                    .fill(palette.primary.gradient)
+                    .fill(palette.primary)
                     .frame(width: 46, height: 46)
                 Image(systemName: systemImage)
                     .foregroundStyle(.white)

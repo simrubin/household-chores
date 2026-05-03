@@ -30,13 +30,13 @@ struct HubCard<Content: View>: View {
             .padding(.top, Spacing.xl)
             .padding(.bottom, bottomPadding)
             .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .leading)
-            .background(palette.surfaceGradient)
+            .background(palette.surface)
             .clipShape(RoundedRectangle(cornerRadius: Radius.xl, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
+                    .strokeBorder(Color.chalk.opacity(0.7), lineWidth: 0.5)
             )
-            .shadow(color: palette.glow, radius: 22, y: 10)
+            .shadow(color: palette.glow, radius: 12, y: 5)
     }
 }
 
@@ -69,7 +69,7 @@ struct HubTitle: View {
 
     var body: some View {
         Text(text)
-            .font(.system(.title2, design: .rounded, weight: .bold))
+            .font(.system(.title2, weight: .bold))
             .foregroundStyle(palette.ink)
             .multilineTextAlignment(.leading)
     }
@@ -105,19 +105,19 @@ struct HubPrimaryButton: View {
             action()
         } label: {
             HStack(spacing: Spacing.sm) {
+                Text(title)
+                    .font(.headline)
                 if let systemImage {
                     Image(systemName: systemImage)
                         .font(.headline)
                 }
-                Text(title)
-                    .font(.headline)
             }
             .foregroundStyle(.white)
             .padding(.horizontal, Spacing.xl)
             .frame(maxWidth: .infinity, minHeight: 56)
-            .background(palette.primary.gradient, in: Capsule())
+            .background(palette.primary, in: Capsule())
             .overlay(Capsule().strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5))
-            .shadow(color: palette.primary.opacity(0.35), radius: 8, y: 4)
+            .shadow(color: palette.primary.opacity(0.08), radius: 3, y: 1)
             .scaleEffect(isPressed ? 0.97 : 1)
         }
         .buttonStyle(.plain)
@@ -139,12 +139,12 @@ struct HubSecondaryPill: View {
             action()
         } label: {
             HStack(spacing: 4) {
+                Text(title)
+                    .font(.footnote.weight(.semibold))
                 if let systemImage {
                     Image(systemName: systemImage)
                         .imageScale(.small)
                 }
-                Text(title)
-                    .font(.footnote.weight(.semibold))
             }
             .foregroundStyle(palette.ink)
             .padding(.horizontal, Spacing.md)

@@ -80,7 +80,7 @@ struct OccurrenceRow: View {
 
                 if isCompleting {
                     Circle()
-                        .fill(occurrence.effort.tint.gradient)
+                        .fill(occurrence.effort.tint)
                         .frame(width: 28, height: 28)
                         .transition(.scale.combined(with: .opacity))
 

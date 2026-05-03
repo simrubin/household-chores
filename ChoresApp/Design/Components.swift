@@ -10,7 +10,7 @@ struct AvatarView: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(tint.gradient.opacity(0.92))
+                .fill(tint.opacity(0.92))
             Text(emoji)
                 .font(.system(size: size * 0.55))
         }
@@ -18,7 +18,7 @@ struct AvatarView: View {
         .overlay(
             Circle().strokeBorder(.white.opacity(0.35), lineWidth: 0.75)
         )
-        .shadow(color: tint.opacity(0.35), radius: 4, y: 2)
+        .shadow(color: tint.opacity(0.15), radius: 3, y: 1)
         .accessibilityHidden(true)
     }
 }
@@ -125,6 +125,46 @@ extension View {
     }
 }
 
+// MARK: - Bare text field
+
+/// Minimal text input: transparent background, no border, orange insertion cursor,
+/// and a light-grey custom placeholder. Automatically focuses and opens the keyboard
+/// when the view appears. Use everywhere a text input is required.
+struct BareTextField: View {
+    @Binding var text: String
+    var placeholder: String
+    var font: Font = .title2.weight(.semibold)
+    var autocapitalize: TextInputAutocapitalization = .sentences
+    var axis: Axis = .horizontal
+
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            if text.isEmpty {
+                Text(placeholder)
+                    .font(font)
+                    .foregroundStyle(Color(oklch: 0.72, 0.008, 76))
+                    .allowsHitTesting(false)
+            }
+            TextField("", text: $text, axis: axis)
+                .font(font)
+                .foregroundStyle(Color.ink)
+                .textInputAutocapitalization(autocapitalize)
+                .textFieldStyle(.plain)
+                .tint(Color.accentColor)
+                .lineLimit(axis == .vertical ? 3 : 1)
+                .focused($isFocused)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                isFocused = true
+            }
+        }
+    }
+}
+
 // MARK: - Empty state
 
 struct EmptyStateView: View {
@@ -141,7 +181,7 @@ struct EmptyStateView: View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: systemImage)
                 .font(.system(size: 48, weight: .light))
-                .foregroundStyle(tint.gradient)
+                .foregroundStyle(tint)
                 .symbolEffect(.pulse.wholeSymbol, options: .repeat(.continuous))
                 .scaleEffect(breathe ? 1.06 : 1.0)
                 .animation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true), value: breathe)

@@ -153,37 +153,25 @@ enum Copy {
     }
 
     enum Onboarding {
-        static let welcomeKicker = "ChoresApp"
-        static let welcomeTitle = "Chores that don't suck."
-        static let welcomeBullet1 = "Split the work, fairly."
-        static let welcomeBullet2 = "Reminders you actually want."
-        static let welcomeBullet3 = "Reshuffle when you're wrecked."
-        static let welcomeStart = "Start a home"
-        static let welcomeJoin = "Got a code?"
+        static let welcomeTitle = "Chores that\ndon't suck."
+        static let welcomeStart = "Let's go"
 
-        static let homeTitle = "Name your home"
-        static let homeSubtitle = "Something your people will call it."
-        static let homeHint = "You can change it later."
-        static let homePlaceholder = "The Burrow"
+        static let homePrompt = "I want to name\nmy home"
         static let homeContinue = "Continue"
 
-        static let youTitle = "Who are you?"
-        static let youSubtitle = "Pick a face your crew will recognise."
+        static let youPrompt = "I go by"
         static let youPlaceholder = "Your name"
         static let youContinue = "Continue"
 
-        static let inviteTitle = "Bring the crew?"
-        static let inviteSubtitle = "Chores split sweetly with two or more. You can do this later."
+        static let invitePrompt = "Bring the crew?"
         static let inviteShareCode = "Share a code"
-        static let inviteSkip = "Skip, just me"
+        static let inviteSkip = "Just me for now"
 
-        static let startersTitle = "Pick a starting kit"
-        static let startersSubtitle = "We'll seed a few chores you can edit. Skip if you'd rather start blank."
-        static let startersContinue = "Use these"
+        static let startersPrompt = "Start with some chores?"
+        static let startersContinue = "Yes please"
         static let startersSkip = "Blank slate"
 
         static let doneTitle = "You're in."
-        static let doneSubtitle = "Let's sort the place out."
         static let doneCTA = "Take me home"
     }
 

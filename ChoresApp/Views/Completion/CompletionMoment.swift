@@ -51,9 +51,9 @@ struct CompletionMoment: View {
     private var sealIcon: some View {
         ZStack {
             Circle()
-                .fill(payload.tint.gradient)
+                .fill(payload.tint)
                 .frame(width: 148, height: 148)
-                .shadow(color: payload.tint.opacity(0.5), radius: 30, y: 10)
+                .shadow(color: payload.tint.opacity(0.25), radius: 16, y: 6)
                 .scaleEffect(phase.rawValue >= Phase.rise.rawValue ? 1 : 0.4)
                 .opacity(phase.rawValue >= Phase.rise.rawValue ? 1 : 0)
 
@@ -67,7 +67,7 @@ struct CompletionMoment: View {
 
     private var title: some View {
         Text(payload.title)
-            .font(.system(.title, design: .rounded, weight: .bold))
+            .font(.system(.title, weight: .bold))
             .multilineTextAlignment(.center)
             .foregroundStyle(.white)
             .opacity(phase.rawValue >= Phase.rise.rawValue ? 1 : 0)
@@ -81,9 +81,9 @@ struct CompletionMoment: View {
             Text(Copy.Completion.karmaDelta(phase.rawValue >= Phase.count.rawValue ? payload.karmaDelta : 0))
                 .contentTransition(.numericText(value: Double(payload.karmaDelta)))
         }
-        .font(.system(.largeTitle, design: .rounded, weight: .heavy))
+        .font(.system(.largeTitle, weight: .heavy))
         .foregroundStyle(.yellow)
-        .shadow(color: .yellow.opacity(0.6), radius: 14, y: 2)
+        .shadow(color: .yellow.opacity(0.3), radius: 8, y: 2)
         .scaleEffect(phase.rawValue >= Phase.count.rawValue ? 1 : 0.5)
         .opacity(phase.rawValue >= Phase.count.rawValue ? 1 : 0)
     }

@@ -85,7 +85,7 @@ struct MoodSheet: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(Copy.Mood.sheetTitle)
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                    .font(.system(.largeTitle, weight: .bold))
                     .foregroundStyle(palette.ink)
                 Text(Copy.Hub.moodSubtitle)
                     .font(.subheadline)
@@ -125,9 +125,9 @@ struct MoodSheet: View {
             HStack(spacing: Spacing.lg) {
                 ZStack {
                     Circle()
-                        .fill(opt.palette.primary.gradient)
+                        .fill(opt.palette.primary)
                         .frame(width: 58, height: 58)
-                        .shadow(color: opt.palette.glow, radius: 10, y: 4)
+                        .shadow(color: opt.palette.glow, radius: 5, y: 2)
                     Image(systemName: opt.symbol)
                         .font(.title2.weight(.bold))
                         .foregroundStyle(.white)
@@ -136,7 +136,7 @@ struct MoodSheet: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(opt.title)
-                        .font(.system(.title3, design: .rounded, weight: .bold))
+                        .font(.system(.title3, weight: .bold))
                         .foregroundStyle(opt.palette.ink)
                     Text(opt.subtitle)
                         .font(.subheadline)
@@ -159,7 +159,7 @@ struct MoodSheet: View {
                 RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5)
             )
-            .shadow(color: opt.palette.glow.opacity(0.5), radius: 12, y: 6)
+            .shadow(color: opt.palette.glow.opacity(0.3), radius: 7, y: 3)
         }
         .buttonStyle(.plain)
         .pressable(scale: 0.98)

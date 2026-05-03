@@ -35,7 +35,7 @@ struct DoItNowCard: View {
                     HubKicker(text: Copy.Hub.doItNowTitle, palette: palette, symbol: "bolt.fill")
 
                     Text(task.title)
-                        .font(.system(.title, design: .rounded, weight: .bold))
+                        .font(.system(.title, weight: .bold))
                         .foregroundStyle(palette.ink)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
@@ -75,7 +75,7 @@ struct DoItNowCard: View {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 HubKicker(text: Copy.Hub.doItNowEmptyTitle, palette: palette, symbol: "sparkles")
                 Text("Nothing's on")
-                    .font(.system(.title, design: .rounded, weight: .bold))
+                    .font(.system(.title, weight: .bold))
                     .foregroundStyle(palette.ink)
                 HubSubtitle(text: Copy.Hub.doItNowEmptySubtitle, palette: palette)
             }

@@ -77,7 +77,7 @@ private struct MiniBalanceChart: View {
                             .fill(palette.tintedNeutral)
                             .frame(width: 36, height: 52)
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(item.0.tint.gradient)
+                            .fill(item.0.tint)
                             .frame(
                                 width: 36,
                                 height: appeared ? max(CGFloat(item.1) / CGFloat(maxPoints) * 52, item.1 > 0 ? 6 : 0) : 0
